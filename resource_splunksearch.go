@@ -54,7 +54,9 @@ func resourceSplunkSearchCreate(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceSplunkSearchRead(d *schema.ResourceData, m interface{}) error {
-	return nil
+	sc := client()
+	_, err := sc.GetSearch(d.Get("name").(string))
+	return err
 }
 
 func resourceSplunkSearchUpdate(d *schema.ResourceData, m interface{}) error {
