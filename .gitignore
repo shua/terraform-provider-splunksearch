@@ -1,0 +1,8 @@
+terraform-provider-splunksearch
+
+.terraform
+*.tfstate
+*.tfstate.backup
+crash.log
+
+local
