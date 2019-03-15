@@ -1,7 +1,10 @@
 package main
 
 import (
+	"os"
+	"net/http"
 	"github.com/hashicorp/terraform/helper/schema"
+	spk "github.com/shua/splunksearch"
 )
 
 func resourceSplunkSearch() *schema.Resource {
@@ -12,16 +15,42 @@ func resourceSplunkSearch() *schema.Resource {
 		Delete: resourceSplunkSearchDelete,
 
 		Schema: map[string]*schema.Schema{
+			"name": &schema.Schema{
+				Type:	 schema.TypeString,
+				Required: true,
+			},
 			"search": &schema.Schema{
 				Type:	 schema.TypeString,
 				Required: true,
+			},
+			"description": &schema.Schema{
+				Type:	 schema.TypeString,
+				Optional: true,
 			},
 		},
 	}
 }
 
+func client() spk.SplunkClient {
+	return spk.SplunkClient{
+		Endpoint: os.Getenv("SPLUNK_ENDPOINT"),
+		Username: os.Getenv("SPLUNK_USERNAME"),
+		Password: os.Getenv("SPLUNK_PASSWORD"),
+		ApiPath:  os.Getenv("SPLUNK_APIPATH"), // eg "/servicesNS/<user>/<index>"
+		Client: &http.Client{},
+	}
+}
+
 func resourceSplunkSearchCreate(d *schema.ResourceData, m interface{}) error {
-	return nil
+	sc := client()
+	ss := spk.SplunkSearch{
+		"name": spk.SType{Str: d.Get("name").(string)},
+		"search": spk.SType{Str: d.Get("search").(string)},
+		"description": spk.SType{Str: d.Get("description").(string)},
+	}
+
+	_, err := sc.NewSearch(ss)
+	return err
 }
 
 func resourceSplunkSearchRead(d *schema.ResourceData, m interface{}) error {
@@ -33,5 +62,7 @@ func resourceSplunkSearchUpdate(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceSplunkSearchDelete(d *schema.ResourceData, m interface{}) error {
-	return nil
+	sc := client()
+	_, err := sc.DeleteSearch(d.Get("name").(string))
+	return err
 }
